@@ -1,3 +1,28 @@
+## Local Development
+
+1. Start the backend Flask server (from the repository root):
+
+   ```bash
+   cd backend
+   python backend_service.py
+   ```
+
+2. Configure the frontend to point at the backend by copying the example environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Adjust `VITE_BACKEND_URL` in `.env` if your backend runs on a different URL.
+
+3. Start the frontend dev server:
+
+   ```bash
+   npm run dev
+   ```
+
+The application will call the backend's `/process_text` endpoint when you click **Process Text**.
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

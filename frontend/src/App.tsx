@@ -37,7 +37,8 @@ const App: React.FC = () => {
     const [textColor, setTextColor] = useState<string>('#1F2937');
 
     // Backend URL where your Flask/FastAPI application will run
-    const BACKEND_URL: string = 'http://localhost:5000';
+    // Can be configured via Vite's environment variable `VITE_BACKEND_URL`
+    const BACKEND_URL: string = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
     // Firebase initialization useEffect removed
 
@@ -296,7 +297,7 @@ const App: React.FC = () => {
                             ref={(el: ReactQuill | null) => { // Corrected type for ref
                                 if (el && el.editor) {
                                     const editor = el.editor;
-                                    const quillElement = editor.container.querySelector('.ql-editor');
+                                    const quillElement = editor.container.querySelector('.ql-editor') as HTMLElement | null;
                                     if (quillElement) {
                                         quillElement.style.fontSize = `${fontSize}px`;
                                         quillElement.style.lineHeight = String(lineHeight);
