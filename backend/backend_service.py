@@ -98,7 +98,10 @@ def text_to_speech(text):
 
 @app.route('/process_text', methods=['POST'])
 def process_text():
-    data = request.json
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Invalid or missing JSON payload."}), 400
+
     input_text = data.get('text', '')
     # llm_prompt_from_frontend is no longer used for dynamic prompting of mock LLM
     # We will use pre-defined mock logic.

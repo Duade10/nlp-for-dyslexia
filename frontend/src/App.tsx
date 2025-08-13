@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 // Firebase imports removed
 // import { initializeApp, FirebaseApp } from 'firebase/app';
 // import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, Auth } from 'firebase/auth';
@@ -73,9 +73,10 @@ const App: React.FC = () => {
             setSimplifiedText(result.simplifiedText);
             setAudioUrl(result.audioUrl);
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Error during text processing:", err);
-            setError(`An error occurred: ${err.message}. Please ensure your backend server is running and accessible.`);
+            const message = err instanceof Error ? err.message : String(err);
+            setError(`An error occurred: ${message}. Please ensure your backend server is running and accessible.`);
         } finally {
             setIsLoading(false);
         }
@@ -283,7 +284,7 @@ const App: React.FC = () => {
                 )}
 
                 {/* Simplified Text Editor */}
-                {simplifiedText !== null && (
+                {simplifiedText && (
                     <div className="mt-6 rounded-lg shadow-sm" style={quillContainerStyle}>
                         <h2 className="text-xl font-semibold mb-2 p-4 pb-0" style={{ color: textColor }}>Simplified Text (Editable):</h2>
                         <ReactQuill
@@ -337,7 +338,13 @@ const App: React.FC = () => {
                                     <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M9.383 3.064A1 1 0 0110 3.868v12.264a1 1 0 01-1.617.792L4.032 11.5a1 1 0 00-.547-.145L1 11.383V8.617l2.485-.091a1 1 0 00.547-.145l4.351-4.351a1 1 0 011.334.064zM16.5 10a.5.5 0 000-1c-2.3 0-4.148-.564-5.383-1.071a.5.5 0 00-.617.828C11.583 9.407 14.07 10 16.5 10zm-3-4a.5.5 0 000-1c-.818 0-1.6-.201-2.28-.396a.5.5 0 00-.593.811C10.15 5.59 11.05 6 13.5 6z" clipRule="evenodd"></path></svg>
                                     Play Audio
                                 </button>
-                                <audio ref={audioRef} src={audioUrl} className="hidden" onEnded={() => console.log("Audio finished.")} onError={(e) => console.error("Audio error:", e.message)}></audio>
+                                <audio
+                                    ref={audioRef}
+                                    src={audioUrl}
+                                    className="hidden"
+                                    onEnded={() => console.log("Audio finished.")}
+                                    onError={(e) => console.error("Audio error:", e.currentTarget.error)}
+                                ></audio>
                             </div>
                         )}
                     </div>
