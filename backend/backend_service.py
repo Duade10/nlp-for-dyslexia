@@ -4,7 +4,8 @@ from flask_cors import CORS
 import os
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
-import base64 # To encode audio data (though will be dummy now)
+import base64  # To encode audio data (though will be dummy now)
+import requests
 
 # Google Cloud Text-to-Speech setup - Client initialization is removed
 # No actual API calls will be made for TTS
@@ -67,19 +68,28 @@ def predict_complexity_inference(text, tokenizer, model, device):
     # Return True for complex (label 1), False for simple (label 0)
     return predictions.item() == 1
 
-def simplify_text_with_llm(text, llm_prompt):
-    """
-    Simulates text simplification with an LLM.
-    It will perform a simple replacement and add bolding.
-    """
-    print(f"Simulating LLM simplification with prompt: {llm_prompt[:100]}...")
-    # Simple simulation: Replace common complex words with simpler ones and add bolding
-    simplified = text.replace("efficacious", "**good**").replace("alleviated", "**helped**").replace("protracted", "**long**").replace("culminating", "**ending in**").replace("remission", "**full recovery**")
-    simplified = simplified.replace("inclement", "**bad**").replace("unequivocally", "**definitely**").replace("postponed", "**delayed**")
-    simplified = simplified.replace("fundamental principles", "**main ideas**").replace("counterintuitive", "**strange**").replace("accustomed", "**used to**").replace("classical Newtonian physics", "**old physics**")
+def simplify_text_with_llm(text, llm_prompt=None):
+    """Send text to external webhook for simplification.
 
-    # Add a prefix to clearly indicate simulation
-    return f"[[SIMPLIFIED BY MOCK LLM]]: {simplified}"
+    The n8n workflow expects a JSON payload of the form
+    `[{"chatInput": "<text>"}]` and returns a list with an
+    `output` field containing the simplified text. If the request
+    fails or the response format is unexpected, the original text
+    is returned.
+    """
+    url = "https://mrhost.top/webhook/bfa6e431-7eb4-4b4b-aa53-98195ee4f90e"
+    payload = [{"chatInput": text}]
+    try:
+        response = requests.post(url, json=payload, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, list) and data and "output" in data[0]:
+            return data[0]["output"]
+        else:
+            print(f"Unexpected response format from simplification service: {data}")
+    except Exception as exc:
+        print(f"Error contacting simplification service: {exc}")
+    return text
 
 
 def text_to_speech(text):
@@ -103,9 +113,8 @@ def process_text():
         return jsonify({"error": "Invalid or missing JSON payload."}), 400
 
     input_text = data.get('text', '')
-    # llm_prompt_from_frontend is no longer used for dynamic prompting of mock LLM
-    # We will use pre-defined mock logic.
-    llm_prompt_from_frontend = data.get('prompt_for_llm', '') # Still receive but not use for mock LLM directly
+    # llm_prompt_from_frontend is kept for backward compatibility but not used
+    llm_prompt_from_frontend = data.get('prompt_for_llm', '')
 
     if not input_text:
         return jsonify({"error": "No text provided for analysis."}), 400
@@ -114,17 +123,16 @@ def process_text():
     is_complex = predict_complexity_inference(input_text, bert_tokenizer, bert_model, bert_device)
 
     complexity_status_message = "analyzed as simple."
-    simplified_output = input_text # Default to original text
+    simplified_output = input_text  # Default to original text
 
     if is_complex:
-        complexity_status_message = "analyzed as complex. Simulating simplification..."
-        # Step 2: Simplify text using simulated LLM
-        # Pass the original text to the mock simplification
-        simplified_output = simplify_text_with_llm(input_text, llm_prompt_from_frontend) # llm_prompt_from_frontend is ignored by mock
+        complexity_status_message = "analyzed as complex. Simplifying..."
+        # Step 2: Simplify text using external service
+        simplified_output = simplify_text_with_llm(input_text, llm_prompt_from_frontend)
     else:
-        # If not complex, still pass through mock LLM for potential "light" formatting
-        print("Text identified as simple, simulating formatting with mock LLM.")
-        simplified_output = simplify_text_with_llm(input_text, llm_prompt_from_frontend) # llm_prompt_from_frontend is ignored by mock
+        # If not complex, still send to simplification service for potential formatting
+        print("Text identified as simple, sending to simplification service.")
+        simplified_output = simplify_text_with_llm(input_text, llm_prompt_from_frontend)
 
 
     # Step 3: Convert simplified text to speech using simulated TTS
