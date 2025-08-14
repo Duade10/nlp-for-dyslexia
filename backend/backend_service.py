@@ -7,6 +7,13 @@ from transformers import BertTokenizer, BertForSequenceClassification
 import base64  # To encode audio data (though will be dummy now)
 import requests
 
+# External simplification service configuration
+SIMPLIFICATION_SERVICE_URL = os.getenv(
+    "SIMPLIFICATION_SERVICE_URL",
+    "https://mrhost.top/webhook/bfa6e431-7eb4-4b4b-aa53-98195ee4f90e",
+)
+SIMPLIFICATION_TIMEOUT = float(os.getenv("SIMPLIFICATION_SERVICE_TIMEOUT", "30"))
+
 # Google Cloud Text-to-Speech setup - Client initialization is removed
 # No actual API calls will be made for TTS
 
@@ -76,18 +83,27 @@ def simplify_text_with_llm(text, llm_prompt=None):
     `output` field containing the simplified text. If the request
     fails or the response format is unexpected, the original text
     is returned.
+
+    The service URL and request timeout can be configured via the
+    ``SIMPLIFICATION_SERVICE_URL`` and ``SIMPLIFICATION_SERVICE_TIMEOUT``
+    environment variables.
     """
-    url = "https://mrhost.top/webhook/bfa6e431-7eb4-4b4b-aa53-98195ee4f90e"
     payload = [{"chatInput": text}]
     try:
-        response = requests.post(url, json=payload, timeout=10)
+        response = requests.post(
+            SIMPLIFICATION_SERVICE_URL,
+            json=payload,
+            timeout=SIMPLIFICATION_TIMEOUT,
+        )
         response.raise_for_status()
         data = response.json()
         if isinstance(data, list) and data and "output" in data[0]:
             return data[0]["output"]
         else:
-            print(f"Unexpected response format from simplification service: {data}")
-    except Exception as exc:
+            print(
+                f"Unexpected response format from simplification service: {data}"
+            )
+    except requests.exceptions.RequestException as exc:
         print(f"Error contacting simplification service: {exc}")
     return text
 
