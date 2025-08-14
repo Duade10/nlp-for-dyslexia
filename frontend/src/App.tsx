@@ -126,7 +126,7 @@ const App: React.FC = () => {
 
             {/* User ID Display removed as Firebase is no longer used */}
 
-            <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl p-6 sm:p-8 lg:p-10 transform transition-all duration-300 hover:shadow-3xl">
+              <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl p-6 sm:p-8 lg:p-10 transform transition-all duration-300 hover:shadow-3xl">
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-6 text-center">
                     Dyslexia-Friendly Text Tool
                 </h1>
@@ -134,49 +134,53 @@ const App: React.FC = () => {
                     Enter text to analyze, simplify, and format for easier reading, including text-to-speech. Use the editor for direct formatting!
                 </p>
 
-                <div className="mb-6">
-                    <label htmlFor="inputText" className="block text-gray-700 text-sm font-bold mb-2">
-                        Enter Text:
-                    </label>
-                    <textarea
-                        id="inputText"
-                        className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out text-gray-800 resize-y min-h-[150px] shadow-sm"
-                        placeholder="Paste your text here..."
-                        value={inputText}
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputText(e.target.value)}
-                        rows={8}
-                    ></textarea>
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="flex flex-col">
+                        <div className="mb-6">
+                            <label htmlFor="inputText" className="block text-gray-700 text-sm font-bold mb-2">
+                                Enter Text:
+                            </label>
+                            <textarea
+                                id="inputText"
+                                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out text-gray-800 resize-y min-h-[150px] shadow-sm"
+                                placeholder="Paste your text here..."
+                                value={inputText}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputText(e.target.value)}
+                                rows={8}
+                            ></textarea>
+                        </div>
 
-                <button
-                    onClick={handleSimplify}
-                    className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md flex items-center justify-center text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isLoading}
-                >
-                    {isLoading ? (
-                        <>
-                            <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Processing...
-                        </>
-                    ) : (
-                        'Process Text (Analyze, Simplify, Speak)'
-                    )}
-                </button>
+                        <button
+                            onClick={handleSimplify}
+                            className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md flex items-center justify-center text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 mr-3 text-white" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Processing...
+                                </>
+                            ) : (
+                                'Process Text (Analyze, Simplify, Speak)'
+                            )}
+                        </button>
 
-                {error && (
-                    <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm shadow-sm" role="alert">
-                        {error}
+                        {error && (
+                            <div className="mt-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm shadow-sm" role="alert">
+                                {error}
+                            </div>
+                        )}
                     </div>
-                )}
 
-                {/* --- Formatting Options (Global) --- */}
-                <div className="mt-8 p-6 bg-gray-50 rounded-lg shadow-inner">
-                    <h2 className="text-xl font-semibold text-gray-800 mb-4">Global Reading Preferences</h2>
-                    <p className="text-gray-600 text-sm mb-4">These settings will apply to the entire simplified text editor below.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="flex flex-col">
+                        {/* --- Formatting Options (Global) --- */}
+                        <div className="mt-8 p-6 bg-gray-50 rounded-lg shadow-inner order-last">
+                            <h2 className="text-xl font-semibold text-gray-800 mb-4">Global Reading Preferences</h2>
+                            <p className="text-gray-600 text-sm mb-4">These settings will apply to the entire simplified text editor below.</p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {/* Font Selection (for Quill's root style) */}
                         <div>
                             <label htmlFor="font-select" className="block text-gray-700 text-sm font-bold mb-2">Base Font:</label>
@@ -350,9 +354,11 @@ const App: React.FC = () => {
                         )}
                     </div>
                 )}
-            </div>
-        </div>
-    );
+             </div>
+         </div>
+     </div>
+ </div>
+ );
 };
 
 export default App;
