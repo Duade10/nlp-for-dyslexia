@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 // Firebase imports removed
 // import { initializeApp, FirebaseApp } from 'firebase/app';
 // import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, Auth } from 'firebase/auth';
@@ -27,6 +27,20 @@ const App: React.FC = () => {
     // const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
     const [audioUrl, setAudioUrl] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
+
+    // --- State for Web Speech API ---
+    const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+    const currentUtterance = useRef<SpeechSynthesisUtterance | null>(null);
+
+    useEffect(() => {
+        const loadVoices = (): void => {
+            setVoices(window.speechSynthesis.getVoices());
+        };
+        loadVoices();
+        if (typeof window !== 'undefined' && window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }, []);
 
     // --- State for Comprehensive Dyslexia-Friendly Formatting ---
     const [selectedFont, setSelectedFont] = useState<string>('Inter');
@@ -87,6 +101,61 @@ const App: React.FC = () => {
         if (audioRef.current && audioUrl) {
             audioRef.current.play().catch((e: DOMException) => console.error("Error playing audio:", e.message));
         }
+    };
+
+    const stripHtml = (html: string): string => {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return (div.textContent || div.innerText || '').trim();
+    };
+
+    const speakHtml = (
+        html: string,
+        { rate = 0.9, pitch = 1.0, lang = 'en-US' }: { rate?: number; pitch?: number; lang?: string } = {}
+    ): void => {
+        const text = stripHtml(html);
+        if (!('speechSynthesis' in window)) {
+            alert('Your browser does not support speech synthesis.');
+            return;
+        }
+        if (!text) return;
+
+        if (currentUtterance.current) window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+
+        const preferred =
+            voices.find(v => v.lang?.toLowerCase().startsWith('en-ng')) ||
+            voices.find(v => v.lang?.toLowerCase().startsWith('en')) ||
+            voices[0];
+        if (preferred) u.voice = preferred;
+
+        u.rate = rate;
+        u.pitch = pitch;
+        u.lang = preferred?.lang || lang;
+
+        u.onend = () => {
+            currentUtterance.current = null;
+        };
+
+        currentUtterance.current = u;
+        window.speechSynthesis.speak(u);
+    };
+
+    const handlePlaySpeech = (): void => {
+        speakHtml(simplifiedText);
+    };
+
+    const handlePauseSpeech = (): void => {
+        window.speechSynthesis.pause();
+    };
+
+    const handleResumeSpeech = (): void => {
+        window.speechSynthesis.resume();
+    };
+
+    const handleStopSpeech = (): void => {
+        window.speechSynthesis.cancel();
+        currentUtterance.current = null;
     };
 
     // Removed the isAuthReady loading screen, as Firebase is no longer used for initial auth check.
@@ -328,6 +397,33 @@ const App: React.FC = () => {
                                 readOnly
                             />
                             <label htmlFor="global-underline-toggle" className="ml-2 text-gray-700 text-sm font-bold">Underline Selected Text (Use Quill Toolbar)</label>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 p-4">
+                            <button
+                                onClick={handlePlaySpeech}
+                                className="px-4 py-2 rounded bg-blue-600 text-white"
+                            >
+                                Play
+                            </button>
+                            <button
+                                onClick={handlePauseSpeech}
+                                className="px-4 py-2 rounded bg-gray-200"
+                            >
+                                Pause
+                            </button>
+                            <button
+                                onClick={handleResumeSpeech}
+                                className="px-4 py-2 rounded bg-gray-200"
+                            >
+                                Resume
+                            </button>
+                            <button
+                                onClick={handleStopSpeech}
+                                className="px-4 py-2 rounded bg-gray-200"
+                            >
+                                Stop
+                            </button>
                         </div>
 
                         {audioUrl && (
